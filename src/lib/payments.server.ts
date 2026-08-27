@@ -10,7 +10,20 @@ import {
 
 export type RazorpayKeys = { keyId: string; keySecret: string };
 
+function envValue(name: string) {
+  const v = process.env[name];
+  return v && v.trim() ? v.trim() : "";
+}
+
+/**
+ * Keys come from host secrets first (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET —
+ * works on Lovable and on Cloudflare), and fall back to the owner-panel values
+ * stored in `secure_settings`.
+ */
 export async function getRazorpayKeys(): Promise<RazorpayKeys | null> {
+  const envId = envValue("RAZORPAY_KEY_ID");
+  const envSecret = envValue("RAZORPAY_KEY_SECRET");
+  if (envId && envSecret) return { keyId: envId, keySecret: envSecret };
   try {
     const map = await readSecureSettings(["razorpay_key_id", "razorpay_key_secret"]);
     const keyId = (map.get("razorpay_key_id") ?? "").trim();
@@ -21,6 +34,7 @@ export async function getRazorpayKeys(): Promise<RazorpayKeys | null> {
     return null;
   }
 }
+
 
 /** Why keys could not be read — used to show the right message to the owner. */
 export async function razorpayKeyStatus() {
