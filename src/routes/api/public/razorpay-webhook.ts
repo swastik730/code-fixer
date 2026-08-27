@@ -39,13 +39,17 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
 
         const { readSecureSettings, activatePaidOrder, markOrderStatus } = await import("@/lib/serverAccess.server");
 
-        let secret = "";
-        try {
-          secret = (await readSecureSettings(["razorpay_webhook_secret"])).get("razorpay_webhook_secret") ?? "";
-        } catch {
-          return new Response("Server keys not linked", { status: 503 });
+        // Host secret first (works on Lovable and Cloudflare), then owner-panel value.
+        let secret = (process.env["RAZORPAY_WEBHOOK_SECRET"] ?? "").trim();
+        if (!secret) {
+          try {
+            secret = (await readSecureSettings(["razorpay_webhook_secret"])).get("razorpay_webhook_secret") ?? "";
+          } catch {
+            return new Response("Server keys not linked", { status: 503 });
+          }
         }
         if (!secret) return new Response("Webhook not configured", { status: 503 });
+
 
         const expected = createHmac("sha256", secret).update(body).digest("hex");
         if (!signature || !safeEqualHex(signature, expected)) {
