@@ -54,8 +54,20 @@ Run `supabase/FULL_SETUP.sql` once in that project's SQL Editor before first use
 
 **Why these can't live in the Owner Panel:** the panel stores its values *inside*
 the database, so the server needs the Supabase URL + key before it can read
-anything. They must be host variables. Everything else (Razorpay keys, webhook
-secret, AI key) lives in the Owner Panel and works on any host.
+anything. They must be host variables.
+
+Optional host secrets that **override** the Owner Panel values (handy on
+Cloudflare, and the safest way to fix a "Razorpay: Authentication failed"):
+
+| Variable | Notes |
+| --- | --- |
+| `RAZORPAY_KEY_ID` | `rzp_live_…` / `rzp_test_…` — must match the secret below |
+| `RAZORPAY_KEY_SECRET` | from the **same** Razorpay Dashboard → Settings → API Keys generation |
+| `RAZORPAY_WEBHOOK_SECRET` | same value you set in Razorpay → Settings → Webhooks |
+
+If these are set, the server uses them; otherwise it falls back to the values
+saved in Owner Panel → Keys. The AI key still lives in the Owner Panel.
+
 
 In Cloudflare: Workers → Settings → Variables and Secrets → add the three above
 as **secrets** (plus the three `VITE_…` build variables from §1). Owner Panel →
